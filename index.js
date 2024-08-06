@@ -343,8 +343,18 @@ class TrackerItem extends HTMLElement {
     this.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
       document.querySelector('tracker-app').localSave();
     });
-
-
+    this.querySelector('input[type="text"]').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        this.setText(e.target.value);
+        this.setEditMode(false);
+        document.querySelector('tracker-app').localSave();
+      }
+    });
+    this.querySelector('input[type="text"]').addEventListener('focusout', (e) => {
+      this.setText(e.target.value);
+      this.setEditMode(false);
+      document.querySelector('tracker-app').localSave();
+    });
   }
 
   setText(text) {
@@ -356,8 +366,10 @@ class TrackerItem extends HTMLElement {
   }
 
   setEditMode(mode) {
+    const editBox = this.querySelector('input[type="text"]');
     this.querySelector('span').style.display = mode ? 'none' : 'block';
-    this.querySelector('input').style.display = mode ? 'block' : 'none';
+    editBox.style.display = mode ? 'block' : 'none';
+    editBox.focus();
   }
 
   delete() {
