@@ -22,6 +22,7 @@ body {
 .app {
   width: 100%;
   height: 100%;
+  color: var(--text-color);
 }
 .app-inputs {
   display: flex;

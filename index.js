@@ -60,14 +60,14 @@ document.querySelector('.sidebar [data-palette-select]').addEventListener('chang
     'light': {
       'top-bar-background-color': '#f0f0f0',
       'background-color': '#f5f5f5',
-      'list-background-color': '#fff',
-      'text-color': '#000'
+      'list-background-color': '#ffffff',
+      'text-color': '#000000'
     },
     'dark': {
       'top-bar-background-color': '#1a1a1a',
-      'background-color': '#333',
-      'list-background-color': '#444',
-      'text-color': '#fff'
+      'background-color': '#333333',
+      'list-background-color': '#444444',
+      'text-color': '#ffffff'
     },
     'spring': {
       'top-bar-background-color': '#8AF3FF',
