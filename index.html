@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="index.css">
+  </head>
+  <body>
+    <template id="list-template">
+      <div class="list">
+        <div class="list-header">
+          <h2 class="list-title"></h2>
+          <button data-delete class="list-delete">Delete</button>
+        </div>
+        <ul class="list-items"></ul>
+        <input class="list-input" type="text" placeholder="Add new item">
+        <button data-add class="list-add">Add</button>
+      </div>
+    </template>
+    <template id="item-template">
+      <li class="list-item">
+        <input type="checkbox" class="list-item-checkbox">
+        <span class="list-item-text"></span>
+        <input type="text" class="list-item-edit">
+        <button data-delete class="list-item-delete">Delete</button>
+      </li>
+    </template>
+    <template id="delete-confirm-toast">
+      <div class="toast">
+        <span class="toast-text"></span>
+        <button class="toast-yes">Yes</button>
+        <button class="toast-no">No</button>
+      </div>
+    </template>
+
+    <div class="app">
+      <h1 class="app-title">Task Tracker</h1>
+      <div class="app-inputs">
+        <input id="new-list-input" class="app-input" type="text" placeholder="Add new list">
+        <button id="new-list-button">Add</button>
+      </div>
+      <div class="app-tasks"></div>
+    </div>
+    
+    <script src="index.js"></script>
+  </body>
+</html>
