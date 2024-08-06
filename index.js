@@ -7,6 +7,8 @@ Todo Features:
 Todo Refactor:
 - app component calls list functions, meaning list must be defined before app, don't like that, but want to keep separation of concerns
   - FIX: maybe move import/export functions outside the components?
+- color palette selection should remember whatever the last custom setup was
+- the palettes themselves aren't great
 */
 
   /* app */
@@ -40,6 +42,7 @@ document.querySelectorAll('.sidebar input[type="color"]').forEach(el => {
   });
 });
 document.querySelector('.sidebar [data-palette-select]').addEventListener('change', (e) => {
+  if (e.target.value === 'custom') return;
   const colors = {
     'light': {
       'top-bar-background-color': '#f0f0f0',
