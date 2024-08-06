@@ -45,6 +45,17 @@
         <svg data-delete xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
       </li>
     </template>
+    
+    <template id="import-export-template">
+      <div data-import-export-modal class="modal">
+        <div class="modal-content">
+          <h2 data-title></h2>
+          <textarea data-content class="textarea"></textarea>
+          <button data-import class="close">Import</button>
+          <button data-close class="close">Close</button>
+        </div>
+      </div>
+    </template>
 
     <template id="delete-confirm-toast">
       <div class="toast">
@@ -72,7 +83,14 @@
         <label for="list-background-color">List Background</label>
         <input name="list-background-color" type="color" id="list-background-color" value="#ffffff" />
       </div>
+      <div class="sidebar-item">
+        <h3 class="title">Import/Export</h3>
+        <button data-export>Export</button>
+        <button data-import>Import</button>
+      </div>
     </div>
+
+    <import-export></import-export>
     <tracker-app></tracker-app>
 
     <script src="index.js"></script>

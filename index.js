@@ -59,6 +59,59 @@ document.querySelectorAll('.sidebar input[type="color"]').forEach(el => {
   });
 });
 
+document.querySelector('.sidebar [data-export]').addEventListener('click', () => {
+  const modal = document.querySelector("import-export");
+  modal.openModal('Export');
+});
+document.querySelector('.sidebar [data-import]').addEventListener('click', () => {
+  const modal = document.querySelector("import-export");
+  modal.openModal('Import');
+});
+
+/* import/export widget */
+class ImportExport extends HTMLElement {
+  constructor() {
+    super();
+  }
+
+  connectedCallback() {
+    this.template = document.getElementById('import-export-template').content;
+    this.appendChild(this.template.cloneNode(true));
+
+    this.modal = this.querySelector("[data-import-export-modal]");
+    this.content = this.querySelector('[data-content]');
+    this.importButton = this.querySelector('[data-import]');
+    this.closeButton = this.querySelector('[data-close]')
+
+    this.setupEvents();
+  }
+
+  setupEvents() {
+    this.querySelector('[data-import]').addEventListener('click', () => {
+      document.querySelector('tracker-app').import(this.content.value);
+      this.closeModal();
+    });
+    this.querySelector("[data-import-export-modal] [data-close]").addEventListener('click', () => {
+      document.querySelector("[data-import-export-modal]").classList.remove('open');
+    });
+  }
+
+  export() {
+    const data = document.querySelector('tracker-app').export();
+    this.content.value = data;
+    this.openModal('Export');
+  }
+
+  openModal(state) {
+    const title = this.querySelector('[data-title]');
+    title.innerHTML = state;
+    this.modal.dataset['state'] = state;
+    this.modal.classList.add('open');
+  }
+  closeModal() {
+    this.modal.classList.remove('open');
+  }
+}
 
 /* app */
 class TrackerApp extends HTMLElement {
@@ -203,4 +256,5 @@ class TrackerItem extends HTMLElement {
 customElements.define('tracker-app', TrackerApp);
 customElements.define('tracker-list', TrackerList);
 customElements.define('tracker-item', TrackerItem);
+customElements.define('import-export', ImportExport)
 
