@@ -2,19 +2,11 @@
 Bugs:
 
 Todo Features:
-- fix edit mode for items, add some kind of edit for card titles, will need confirm/cancel buttons which can probably be re-used for delete confirmation
-- settings sidebar
-  - themes, colors
-    + top bar, background, cards, text
-    - include some palettes with the palette generator, and the ability to make a new theme/palette (ez js object)
-  - export/import to json, including settings
-  + add whole state to local storage
 - Drag and Drop
 
 Todo Refactor:
 - app component calls list functions, meaning list must be defined before app, don't like that, but want to keep separation of concerns
   - FIX: maybe move import/export functions outside the components?
-
 */
 
   /* app */
@@ -35,14 +27,6 @@ Todo Refactor:
    * - for both intra and inter list dragging, if the drop is invalid just cancel the move
    * 
    * For all drag operations, set original item/list to display: none to hide it, if cancelling then just set it back to display: flex
-  document.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    console.log('dragover', e);
-  }, { bubbles: true });
-
-  document.getElementById('list-container').addEventListener('drop', (e) => {
-    console.log('drop', e);
-  });
    */
 
 /* sidebar, just some setting and modal control */
@@ -258,7 +242,6 @@ class TrackerList extends HTMLElement {
   connectedCallback() {
     this.template = document.getElementById('list-template').content;
     this.appendChild(this.template.cloneNode(true));
-    this.setAttribute('draggable', true);
     
     const title = this.getAttribute('title');
     const titleEl = this.querySelector('h2');
@@ -281,12 +264,6 @@ class TrackerList extends HTMLElement {
         this.addItem(e.target.value);
         e.target.value = '';
       }
-    });
-    this.addEventListener('dragstart', (e) => {
-      console.log('dragstart', e.target);
-    });
-    this.addEventListener('dragend', (e) => {
-      console.log('dragend', e.target);
     });
   }
 
