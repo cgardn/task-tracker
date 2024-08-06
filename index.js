@@ -52,6 +52,7 @@ document.querySelector('.sidebar .open-button').addEventListener('click', () => 
 document.querySelectorAll('.sidebar input[type="color"]').forEach(el => {
   el.addEventListener('change', (e) => {
     document.documentElement.style.setProperty(`--${e.target.name}`, e.target.value);
+    document.querySelector('tracker-app').localSave();
   });
 });
 document.querySelector('.sidebar [data-export]').addEventListener('click', () => {
@@ -152,24 +153,33 @@ class TrackerApp extends HTMLElement {
     list.title = title;
     this.querySelector('.app-tasks').appendChild(list);
     if (items.length) {
-      console.log(list, items)
       list.import(items);
     }
   }
 
-  export() {
-    let exportedData = []
+  clearLists() {
     this.querySelectorAll('tracker-list').forEach(list => {
-      exportedData.push({ title: list.getTitle(), items: list.export() });
+      list.remove();
+    });
+  }
+
+  export() {
+    let exportedData = {lists: [], settings: {}}
+    this.querySelectorAll('tracker-list').forEach(list => {
+      exportedData.lists.push({ title: list.getTitle(), items: list.export() });
     })
+    exportedData.settings = this.getColorSettings();
     return JSON.stringify(exportedData);
   }
 
   import(data) {
+    this.clearLists();
     const importedData = JSON.parse(data);
-    for (let list in importedData) {
-      this.addList(importedData[list].title, importedData[list].items);
+    for (let list in importedData.lists) {
+      this.addList(importedData.lists[list].title, importedData.lists[list].items);
     };
+    this.loadSettings(importedData.settings);
+    this.localSave();
   }
 
   localSave() {
@@ -178,6 +188,20 @@ class TrackerApp extends HTMLElement {
   localLoad() {
     if (localStorage.getItem('tracker-app')) {
       this.import(localStorage.getItem('tracker-app'));
+    }
+  }
+
+  getColorSettings() {
+    return {
+      'top-bar-background-color': document.documentElement.style.getPropertyValue('--top-bar-background-color'),
+      'background-color': document.documentElement.style.getPropertyValue('--background-color'),
+      'list-background-color': document.documentElement.style.getPropertyValue('--list-background-color'),
+      'text-color': document.documentElement.style.getPropertyValue('--text-color'),
+    }
+  }
+  loadSettings(settings) {
+    for (let setting in settings) {
+      document.documentElement.style.setProperty(`--${setting}`, settings[setting]);
     }
   }
 }
@@ -226,6 +250,7 @@ class TrackerList extends HTMLElement {
     for (let item of data) {
       this.addItem(item.text, item.checked);
     }
+    this.closest('tracker-app').localSave();
   }
 
   export() {
@@ -245,7 +270,6 @@ class TrackerList extends HTMLElement {
     item.setAttribute('text', text);
     item.setAttribute('checked', checked);
     this.querySelector('.list-items').appendChild(item);
-    this.closest('tracker-app').localSave();
   }
 
   delete() {
@@ -272,6 +296,11 @@ class TrackerItem extends HTMLElement {
     this.querySelector('span').addEventListener('click', () => {
       this.setEditMode(true);
     });
+    this.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
+      document.querySelector('tracker-app').localSave();
+    });
+
+
   }
 
   setText(text) {
@@ -297,4 +326,3 @@ customElements.define('tracker-item', TrackerItem);
 customElements.define('tracker-list', TrackerList);
 customElements.define('tracker-app', TrackerApp);
 customElements.define('import-export', ImportExport)
-
