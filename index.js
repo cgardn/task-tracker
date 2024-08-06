@@ -123,7 +123,6 @@ class ImportExport extends HTMLElement {
   export() {
     const data = document.querySelector('tracker-app').export();
     this.content.value = data;
-    console.log(data);
     this.openModal('Export');
   }
 

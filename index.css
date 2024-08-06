@@ -82,8 +82,7 @@ tracker-list [data-delete] {
 }
 @media screen and (min-width: 768px) {
   tracker-list {
-    max-width: 400px;
-    flex-shrink: 1;
+    width: 400px;
   }
 }
 .list {
@@ -239,8 +238,8 @@ tracker-item {
   z-index: 1;
   left: 0;
   top: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   overflow: auto;
   background-color: rgba(0, 0, 0, 0.4);
 }
