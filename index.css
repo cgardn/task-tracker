@@ -37,8 +37,14 @@ tracker-list {
   display: flex;
   flex: 1 0 100%;
   width: 100%;
+  height: fit-content;
   max-width: 500px;
   margin-right: 10px;
+}
+tracker-list [data-delete] {
+  align-self: start;
+  fill: #111;
+  cursor: pointer;
 }
 @media screen and (min-width: 768px) {
   tracker-list {
@@ -63,10 +69,27 @@ tracker-list {
   margin-bottom: 10px;
 }
 .list-title {
-  margin-top: 0;
+  margin: 0;
 }
-.list-delete {
-  align-self: start;
+.list-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+.list-footer input {
+  flex: 1;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-right: 5px;
+}
+.list-footer button {
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  cursor: pointer;
 }
 
 /* list items */
@@ -74,7 +97,7 @@ tracker-item {
   flex: 1 0 100%;
 }
 .list-items {
-  margin-top: 20px;
+  margin: 0;
   display: flex;
   flex-wrap: wrap;
   padding: 10px 0px;
@@ -84,7 +107,7 @@ tracker-item {
   flex: 1 0 100%;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
+  padding: 10px 0px;
   border-bottom: 1px solid #ccc;
 }
 .list-item-checkbox:checked + span {
