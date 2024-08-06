@@ -11,6 +11,7 @@ Todo Refactor:
 - color palette selection should remember whatever the last custom setup was
 - the palettes themselves aren't great
 - probably should make the sidebar toggle touch target bigger on mobile
+- palette select options should be driven by what palettes are actually available so I don't have to type them out twice
 */
 
   /* app */
@@ -58,23 +59,29 @@ document.querySelector('.sidebar [data-palette-select]').addEventListener('chang
       'list-background-color': '#444444',
       'text-color': '#ffffff'
     },
+    'neutral': {
+      'top-bar-background-color': '#F0F5EF',
+      'background-color': '#D2D2C8',
+      'list-background-color': '#E0E2D7',
+      'text-color': '#B6B7B2'
+    },
     'spring': {
-      'top-bar-background-color': '#8AF3FF',
-      'background-color': '#109648',
-      'list-background-color': '#18A999',
-      'text-color': '#F7F0F0'
+      'top-bar-background-color': '#CED5DF',
+      'background-color': '#CDD5C6',
+      'list-background-color': '#D9D0C7',
+      'text-color': '#59554D'
     },
     'ice': {
-      'top-bar-background-color': '#EFD3D7',
-      'background-color': '#EFD3D7',
-      'list-background-color': '#8AF3FF',
-      'text-color': '#161925'
+      'top-bar-background-color': '#798C8C',
+      'background-color': '#AEBFBE',
+      'list-background-color': '#F2EFDF',
+      'text-color': '#59554C'
     },
-    'sunset': {
-      'top-bar-background-color': '#81171B',
-      'background-color': '#81171B',
-      'list-background-color': '#EA8C55',
-      'text-color': '#540804'
+    'sunrise': {
+      'top-bar-background-color': '#F2958D',
+      'background-color': '#F2B29B',
+      'list-background-color': '#F2C094',
+      'text-color': '#252526'
     }
   }
   for (let color in colors[e.target.value]) {
