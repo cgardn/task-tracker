@@ -9,6 +9,7 @@ Todo Refactor:
   - FIX: maybe move import/export functions outside the components?
 - color palette selection should remember whatever the last custom setup was
 - the palettes themselves aren't great
+- probably should make the sidebar toggle touch target bigger on mobile
 */
 
   /* app */
@@ -91,6 +92,13 @@ document.querySelector('.sidebar [data-import]').addEventListener('click', () =>
   const modal = document.querySelector("import-export");
   modal.openModal('Import');
 });
+// closing the sidebar when clicking outside of it
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.sidebar') === null && e.target.closest('.open-button') === null) {
+    document.querySelector('.sidebar').classList.toggle('open');
+  }
+});
+
 
 /* import/export widget, component because re-used for both */
 class ImportExport extends HTMLElement {
