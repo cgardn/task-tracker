@@ -1,22 +1,19 @@
 /*
 Bugs:
-- bug: adding an item doesn't use the input, or clear it
 
 Todo Features:
-- move new list to ghost card w/ dotted border on left if no cards, as smaller skinny ghost card if some cards
-- move new item to top of list cards
 - fix edit mode for items, add some kind of edit for card titles, will need confirm/cancel buttons which can probably be re-used for delete confirmation
 - settings sidebar
   - themes, colors
     + top bar, background, cards, text
     - include some palettes with the palette generator, and the ability to make a new theme/palette (ez js object)
   - export/import to json, including settings
-  - add whole state to local storage
+  + add whole state to local storage
 - Drag and Drop
 
-Todo styling:
-- add a font
-- add better colors
+Todo Refactor:
+- app component calls list functions, meaning list must be defined before app, don't like that, but want to keep separation of concerns
+  - FIX: maybe move import/export functions outside the components?
 
 */
 
@@ -48,27 +45,25 @@ Todo styling:
   });
    */
 
-/* sidebar */
+/* sidebar, just some setting and modal control */
 document.querySelector('.sidebar .open-button').addEventListener('click', () => {
   document.querySelector('.sidebar').classList.toggle('open');
 });
-
 document.querySelectorAll('.sidebar input[type="color"]').forEach(el => {
   el.addEventListener('change', (e) => {
     document.documentElement.style.setProperty(`--${e.target.name}`, e.target.value);
   });
 });
-
 document.querySelector('.sidebar [data-export]').addEventListener('click', () => {
   const modal = document.querySelector("import-export");
-  modal.openModal('Export');
+  modal.export();
 });
 document.querySelector('.sidebar [data-import]').addEventListener('click', () => {
   const modal = document.querySelector("import-export");
   modal.openModal('Import');
 });
 
-/* import/export widget */
+/* import/export widget, component because re-used for both */
 class ImportExport extends HTMLElement {
   constructor() {
     super();
@@ -88,7 +83,7 @@ class ImportExport extends HTMLElement {
 
   setupEvents() {
     this.querySelector('[data-import]').addEventListener('click', () => {
-      document.querySelector('tracker-app').import(this.content.value);
+      this.import();
       this.closeModal();
     });
     this.querySelector("[data-import-export-modal] [data-close]").addEventListener('click', () => {
@@ -99,7 +94,12 @@ class ImportExport extends HTMLElement {
   export() {
     const data = document.querySelector('tracker-app').export();
     this.content.value = data;
+    console.log(data);
     this.openModal('Export');
+  }
+
+  import() {
+    document.querySelector('tracker-app').import(this.content.value);
   }
 
   openModal(state) {
@@ -107,6 +107,9 @@ class ImportExport extends HTMLElement {
     title.innerHTML = state;
     this.modal.dataset['state'] = state;
     this.modal.classList.add('open');
+    if (state === 'Import') {
+      this.content.value = '';
+    }
   }
   closeModal() {
     this.modal.classList.remove('open');
@@ -123,12 +126,11 @@ class TrackerApp extends HTMLElement {
     this.template = document.getElementById('app-template').content;
     this.appendChild(this.template.cloneNode(true));
     this.setupEvents();
+    this.localLoad();
   }
 
   new_list_input_handler(inputElement) {
-    let list = document.createElement('tracker-list');
-    list.title = inputElement.value;
-    inputElement.closest('.app').querySelector('.app-tasks').appendChild(list)
+    this.addList(inputElement.value);
     inputElement.value = '';
   }
 
@@ -136,39 +138,48 @@ class TrackerApp extends HTMLElement {
     this.querySelector('[data-input]').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         this.new_list_input_handler(e.target);
+        this.localSave();
       }
     });
     this.querySelector('[data-add]').addEventListener('click', (e) => {
       this.new_list_input_handler(e.target.previousElementSibling)
+      this.localSave();
     });
   }
 
+  addList(title, items = []) {
+    let list = document.createElement('tracker-list');
+    list.title = title;
+    this.querySelector('.app-tasks').appendChild(list);
+    if (items.length) {
+      console.log(list, items)
+      list.import(items);
+    }
+  }
+
   export() {
-    let exportedData = {}
+    let exportedData = []
     this.querySelectorAll('tracker-list').forEach(list => {
-      exportedData[list.title] = [];
-      list.querySelectorAll('tracker-item').forEach(item => {
-        exportedData[list.title].push({ text: item.querySelector('span').innerHTML });
-      });
+      exportedData.push({ title: list.getTitle(), items: list.export() });
     })
     return JSON.stringify(exportedData);
   }
 
   import(data) {
-    this.querySelector('task-container').innerHTML = '';
     const importedData = JSON.parse(data);
     for (let list in importedData) {
-      let newList = document.createElement('tracker-list');
-      newList.title = list;
-      importedData[list].forEach(item => {
-        let newItem = document.createElement('tracker-item');
-        newItem.text = item.text;
-        newList.appendChild(newItem);
-      });
-      this.querySelector('task-container').appendChild(newList);
-    }
+      this.addList(importedData[list].title, importedData[list].items);
+    };
   }
 
+  localSave() {
+    localStorage.setItem('tracker-app', this.export());
+  }
+  localLoad() {
+    if (localStorage.getItem('tracker-app')) {
+      this.import(localStorage.getItem('tracker-app'));
+    }
+  }
 }
 
 class TrackerList extends HTMLElement {
@@ -181,7 +192,9 @@ class TrackerList extends HTMLElement {
     this.appendChild(this.template.cloneNode(true));
     this.setAttribute('draggable', true);
     
-    this.getAttribute('title') ? this.querySelector('h2').innerHTML = this.getAttribute('title') : this.querySelector('h2').innerHTML = 'New List';
+    const title = this.getAttribute('title');
+    const titleEl = this.querySelector('h2');
+    titleEl.innerHTML = title ? title : 'New List';
 
     this.setupEvents();
   }
@@ -209,14 +222,35 @@ class TrackerList extends HTMLElement {
     });
   }
 
-  addItem(text) {
+  import(data) {
+    for (let item of data) {
+      this.addItem(item.text, item.checked);
+    }
+  }
+
+  export() {
+    let exportedData = [];
+    this.querySelectorAll('tracker-item').forEach(item => {
+      exportedData.push({ text: item.querySelector('span').innerHTML, checked: item.querySelector('input').checked });
+    });
+    return exportedData;
+  }
+
+  getTitle() {
+    return this.querySelector('h2').innerHTML;
+  }
+
+  addItem(text, checked = false) {
     let item = document.createElement('tracker-item');
     item.setAttribute('text', text);
-    this.querySelector('.list-items')?.appendChild(item);
+    item.setAttribute('checked', checked);
+    this.querySelector('.list-items').appendChild(item);
+    this.closest('tracker-app').localSave();
   }
 
   delete() {
     this.remove();
+    document.querySelector('tracker-app').localSave();
   }
 }
 
@@ -230,6 +264,7 @@ class TrackerItem extends HTMLElement {
     this.appendChild(this.template.cloneNode(true));
 
     this.setText(this.getAttribute('text') || 'New Task');
+    this.setChecked(this.getAttribute('checked') === 'true' ? true : false);
 
     this.querySelector('[data-delete]').addEventListener('click', () => {
       this.delete();
@@ -243,6 +278,10 @@ class TrackerItem extends HTMLElement {
     this.querySelector('span').innerHTML = text;
   }
 
+  setChecked(state) {
+    this.querySelector('input').checked = state;
+  }
+
   setEditMode(mode) {
     this.querySelector('span').style.display = mode ? 'none' : 'block';
     this.querySelector('input').style.display = mode ? 'block' : 'none';
@@ -250,11 +289,12 @@ class TrackerItem extends HTMLElement {
 
   delete() {
     this.remove();
+    document.querySelector('tracker-app').localSave();
   }
 }
 
-customElements.define('tracker-app', TrackerApp);
-customElements.define('tracker-list', TrackerList);
 customElements.define('tracker-item', TrackerItem);
+customElements.define('tracker-list', TrackerList);
+customElements.define('tracker-app', TrackerApp);
 customElements.define('import-export', ImportExport)
 
