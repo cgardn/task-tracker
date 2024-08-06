@@ -1,6 +1,5 @@
 /*
 Bugs:
-- sidebar shouldn't open when clicking outside it
 
 Todo Features:
 - Drag and Drop
@@ -9,7 +8,6 @@ Todo Refactor:
 - app component calls list functions, meaning list must be defined before app, don't like that, but want to keep separation of concerns
   - FIX: maybe move import/export functions outside the components?
 - color palette selection should remember whatever the last custom setup was
-- the palettes themselves aren't great
 - probably should make the sidebar toggle touch target bigger on mobile
 - palette select options should be driven by what palettes are actually available so I don't have to type them out twice
 */
