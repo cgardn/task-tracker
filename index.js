@@ -1,5 +1,6 @@
 /*
 Bugs:
+- sidebar shouldn't open when clicking outside it
 
 Todo Features:
 - Drag and Drop
@@ -95,10 +96,9 @@ document.querySelector('.sidebar [data-import]').addEventListener('click', () =>
 // closing the sidebar when clicking outside of it
 document.addEventListener('click', (e) => {
   if (e.target.closest('.sidebar') === null && e.target.closest('.open-button') === null) {
-    document.querySelector('.sidebar').classList.toggle('open');
+    document.querySelector('.sidebar').classList.remove('open');
   }
 });
-
 
 /* import/export widget, component because re-used for both */
 class ImportExport extends HTMLElement {
