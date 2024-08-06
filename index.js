@@ -55,6 +55,47 @@ document.querySelectorAll('.sidebar input[type="color"]').forEach(el => {
     document.querySelector('tracker-app').localSave();
   });
 });
+document.querySelector('.sidebar [data-palette-select]').addEventListener('change', (e) => {
+  const colors = {
+    'light': {
+      'top-bar-background-color': '#f0f0f0',
+      'background-color': '#f5f5f5',
+      'list-background-color': '#fff',
+      'text-color': '#000'
+    },
+    'dark': {
+      'top-bar-background-color': '#1a1a1a',
+      'background-color': '#333',
+      'list-background-color': '#444',
+      'text-color': '#fff'
+    },
+    'spring': {
+      'top-bar-background-color': '#8AF3FF',
+      'background-color': '#109648',
+      'list-background-color': '#18A999',
+      'text-color': '#F7F0F0'
+    },
+    'ice': {
+      'top-bar-background-color': '#EFD3D7',
+      'background-color': '#EFD3D7',
+      'list-background-color': '#8AF3FF',
+      'text-color': '#161925'
+    },
+    'sunset': {
+      'top-bar-background-color': '#81171B',
+      'background-color': '#81171B',
+      'list-background-color': '#EA8C55',
+      'text-color': '#540804'
+    }
+  }
+  for (let color in colors[e.target.value]) {
+    document.documentElement.style.setProperty(`--${color}`, colors[e.target.value][color]);
+    document.querySelectorAll(`input[name="${color}"]`).forEach(el => {
+      el.value = colors[e.target.value][color];
+    });
+  }
+  document.querySelector('tracker-app').localSave();
+});
 document.querySelector('.sidebar [data-export]').addEventListener('click', () => {
   const modal = document.querySelector("import-export");
   modal.export();
@@ -202,6 +243,9 @@ class TrackerApp extends HTMLElement {
   loadSettings(settings) {
     for (let setting in settings) {
       document.documentElement.style.setProperty(`--${setting}`, settings[setting]);
+      document.querySelectorAll(`input[name="${setting}"]`).forEach(el => {
+        el.value = settings[setting];
+      });
     }
   }
 }
