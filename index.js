@@ -274,12 +274,38 @@ class TrackerList extends HTMLElement {
       this.addItem(input.value);
       input.value = '';
     });
-    this.querySelector('input').addEventListener('keypress', (e) => {
+    this.querySelector('[data-item-input]').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         this.addItem(e.target.value);
         e.target.value = '';
       }
     });
+    this.querySelector('[data-title]').addEventListener('click', () => {
+      this.setEditMode(true);
+    });
+    this.querySelector('input[type="text"]').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        this.setText(e.target.value);
+        this.setEditMode(false);
+        document.querySelector('tracker-app').localSave();
+      }
+    });
+    this.querySelector('input[type="text"]').addEventListener('focusout', (e) => {
+      this.setText(e.target.value);
+      this.setEditMode(false);
+      document.querySelector('tracker-app').localSave();
+    });
+  }
+
+  setEditMode(mode) {
+    const editBox = this.querySelector('input[type="text"]');
+    this.querySelector('[data-title]').style.display = mode ? 'none' : 'block';
+    editBox.style.display = mode ? 'block' : 'none';
+    editBox.focus();
+  }
+
+  setText(text) {
+    this.querySelector('[data-title]').innerHTML = text;
   }
 
   import(data) {
