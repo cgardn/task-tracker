@@ -252,6 +252,7 @@ class TrackerApp extends HTMLElement {
 class TrackerList extends HTMLElement {
   constructor() {
     super();
+    this.draggedItem = null;
   }
 
   connectedCallback() {
@@ -266,46 +267,86 @@ class TrackerList extends HTMLElement {
   }
 
   setupEvents() {
-    this.querySelector("[data-delete]").addEventListener('click', () => {
-      this.delete();
-    });
-    this.querySelector("button[data-add]").addEventListener('click', () => {
-      const input = this.querySelector('[data-item-input]');
-      this.addItem(input.value);
-      input.value = '';
-    });
-    this.querySelector('[data-item-input]').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        this.addItem(e.target.value);
-        e.target.value = '';
-      }
-    });
-    this.querySelector('[data-title]').addEventListener('click', () => {
-      this.setEditMode(true);
-    });
-    this.querySelector('input[type="text"]').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        this.setText(e.target.value);
-        this.setEditMode(false);
-        document.querySelector('tracker-app').localSave();
-      }
-    });
-    this.querySelector('input[type="text"]').addEventListener('focusout', (e) => {
-      this.setText(e.target.value);
-      this.setEditMode(false);
-      document.querySelector('tracker-app').localSave();
-    });
+    this.querySelector("[data-delete]").addEventListener('click', () => { this.delete(); });
+    this.querySelector("button[data-add]").addEventListener('click', this.handleAddItem.bind(this));
+    this.querySelector('[data-item-input]').addEventListener('keypress', (e) => e.key === 'Enter' ? this.handleAddItem(e) : null);
+    this.querySelector('[data-title]').addEventListener('click', () => { this.setEditMode(true); });
+    this.querySelector('input[type="text"]').addEventListener('keypress', (e) => { e.key === 'Enter' ? this.handleCloseInput(e) : null });
+    this.querySelector('input[type="text"]').addEventListener('focusout', this.handleCloseInput.bind(this));
+    this.addEventListener('dragover', this.handleItemDragover.bind(this));
+    this.addEventListener('dragenter', (e) => { e.preventDefault(); console.log('list dragenter') });
+    this.addEventListener('dragleave', (e) => { e.preventDefault(); console.log('list dragleave') });
+    this.addEventListener('drop', this.handleItemDrop.bind(this));
   }
 
   setEditMode(mode) {
     const editBox = this.querySelector('input[type="text"]');
     this.querySelector('[data-title]').style.display = mode ? 'none' : 'block';
     editBox.style.display = mode ? 'block' : 'none';
+    editBox.value = this.querySelector('h2').innerHTML;
     editBox.focus();
   }
 
   setText(text) {
     this.querySelector('[data-title]').innerHTML = text;
+  }
+
+  updateItemMidpoints() {
+    this.itemMidpoints = {};
+    this.querySelectorAll('tracker-item').forEach(item => {
+      const rect = item.getBoundingClientRect();
+      this.itemMidpoints[(rect.top + (rect.height / 2))] = item;
+    });
+  }
+
+  handleCloseInput (e) {
+    this.setText(e.target.value);
+    this.setEditMode(false);
+    document.querySelector('tracker-app').localSave();
+  }
+
+  handleAddItem (e) {
+    const input = this.querySelector('[data-item-input]');
+    this.addItem(input.value);
+    input.value = '';
+  }
+
+  handleItemDragover(e) {
+    // basically the list watches for which other list item the dragged item just passed, and moves the ghost item to that position
+    // but it's not really a ghost item, it's the actual item being dragged with some css to make it look like a ghost item
+    // that way we can just cancel/end the drag at any time and nothing needs to be transferred, the dragged item has already been moved
+    // TODO: account for moving between lists
+    // new: if the dragged item is over the top half of an item, move it above that item, if it's over the bottom half, move it below that item
+    // - need to get specifically what tracker-item the dragged item is over, can check if target is tracker-item and if not find closest tracker-item
+    //  -- if both fail then we're not inside a tracker-item and can just return
+    e.preventDefault();
+    const target = e.target.tagName == 'TRACKER-ITEM' ? e.target : e.target.closest('tracker-item')
+    // if we're not over a tracker-item or one of it's children, just return
+    if (!target) return;
+    console.log(target);
+    return
+
+    this.updateItemMidpoints();
+    const dragY = e.clientY;
+    // get next midpoint down that is below clientY
+    let nextMidpoint = Object.keys(this.itemMidpoints).find(midpoint => midpoint > dragY);
+    let nextItem = nextMidpoint ? this.itemMidpoints[nextMidpoint] : null;
+    // move dragged item above nextItem, unless it's the last item, then move it below
+    if (nextItem) {
+      nextItem.parentElement.insertBefore(this.draggedItem, nextItem);
+    } else {
+      this.appendChild(this.draggedItem);
+    }
+    this.updateItemMidpoints();
+  }
+
+  handleItemDrop(e) {
+    e.preventDefault();
+    console.log(e);
+    console.log("list drop")
+    const data = e.dataTransfer.getData('text/plain');
+    const item = document.createElement('tracker-item');
+    item.setAttribute('text', data);
   }
 
   import(data) {
@@ -348,31 +389,81 @@ class TrackerItem extends HTMLElement {
   connectedCallback() {
     this.template = document.getElementById('item-template').content;
     this.appendChild(this.template.cloneNode(true));
+    this.draggable = true
 
+    // initial conditions
     this.setText(this.getAttribute('text') || 'New Task');
     this.setChecked(this.getAttribute('checked') === 'true' ? true : false);
 
-    this.querySelector('[data-delete]').addEventListener('click', () => {
-      this.delete();
-    });
-    this.querySelector('span').addEventListener('click', () => {
-      this.setEditMode(true);
-    });
-    this.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
-      document.querySelector('tracker-app').localSave();
-    });
-    this.querySelector('input[type="text"]').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        this.setText(e.target.value);
-        this.setEditMode(false);
-        document.querySelector('tracker-app').localSave();
+    // checkbox and text input events
+    this.querySelector('[data-delete]').addEventListener('click', () => { this.delete(); });
+    this.querySelector('span').addEventListener('click', () => { this.setEditMode(true); });
+    this.querySelector('input[type="checkbox"]').addEventListener('change', () => { document.querySelector('tracker-app').localSave(); });
+    this.querySelector('input[type="text"]').addEventListener('keypress', (e) => e.key === 'Enter' ? this.handleCloseInput(e) : null);
+    this.querySelector('input[type="text"]').addEventListener('focusout', this.handleCloseInput.bind(this));
+
+    // drag and drop
+    this.addEventListener('dragstart', this.handleDragStart.bind(this))
+    this.addEventListener('dragend', this.handleDragEnd.bind(this))
+    //this.addEventListener('dragover', this.handleDragOver.bind(this))
+    /*
+      console.log('dragover')
+      e.preventDefault();
+      if (this.classList.contains('dragging')) return;
+
+      const target = e.target.tagName == 'TRACKER-ITEM' ? e.target : e.target.closest('tracker-item')
+      // if we're not over a tracker-item or one of it's children, just return
+      if (!target) return;
+      console.log('item dragover', target);
+      return
+
+      const rect = this.getBoundingClientRect();
+      const midPoint = rect.top + (rect.height / 2);
+      if (e.clientY > midPoint) {
+        this.classList.add('drag-over-bottom');
+      } else {
+        this.classList.add('drag-over-top');
       }
     });
-    this.querySelector('input[type="text"]').addEventListener('focusout', (e) => {
-      this.setText(e.target.value);
-      this.setEditMode(false);
-      document.querySelector('tracker-app').localSave();
-    });
+    */
+  }
+
+  // event handlers
+  handleCloseInput (e) {
+    this.setText(e.target.value);
+    this.setEditMode(false);
+    document.querySelector('tracker-app').localSave();
+  }
+  handleDragStart(e) {
+    this.classList.add('dragging');
+    console.log('dragstart')
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', this.querySelector('span').innerHTML);
+    this.closest('tracker-list').draggedItem = this;
+  }
+
+  handleDragOver(e) {
+    console.log(e)
+    e.preventDefault();
+    console.log('dragover')
+    if (this.classList.contains('dragging')) return;
+
+    const rect = this.getBoundingClientRect();
+    const midPoint = rect.top + (rect.height / 2);
+    if (e.clientY > midPoint) {
+      console.log('bottom')
+      this.classList.add('drag-over-bottom');
+    } else {
+      console.log('top')
+      this.classList.add('drag-over-top');
+    }
+  }
+  handleDragEnd(e) {
+    console.log('dragend')
+    this.classList.remove('dragging');
+    this.closest('tracker-list').draggedItem = null;
+    const indicator = document.querySelector('[data-drag-indicator]')
+    indicator.style.display = 'none';
   }
 
   setText(text) {
@@ -387,6 +478,7 @@ class TrackerItem extends HTMLElement {
     const editBox = this.querySelector('input[type="text"]');
     this.querySelector('span').style.display = mode ? 'none' : 'block';
     editBox.style.display = mode ? 'block' : 'none';
+    editBox.value = this.querySelector('span').innerHTML;
     editBox.focus();
   }
 

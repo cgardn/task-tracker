@@ -134,6 +134,16 @@ tracker-list [data-delete] {
 tracker-item {
   flex: 1 0 100%;
 }
+tracker-item.dragging {
+  opacity: 0.5;
+  border: 1px dashed #ccc;
+  color: grey;
+  background-color: grey;
+}
+.tracker-item.dragging * {
+  color: grey;
+  background-color: grey;
+}
 .list-items {
   margin: 0;
   display: flex;
@@ -265,4 +275,18 @@ tracker-item {
 }
 .modal[data-state="Export"] [data-import] {
   display: none;
+}
+
+.drag-indicator {
+  display: none;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  background-color: yellow;
+  opacity: 1;
+  z-index: 10000;
 }
