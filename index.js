@@ -1,5 +1,6 @@
 /*
 Bugs:
+- replace sidebar open icon with proper filled circle w/ border, clip mask on current material icon leaves a little white background of box behind
 
 Todo Features:
 - Drag and Drop
@@ -33,8 +34,19 @@ Todo Refactor:
    */
 
 /* sidebar, just some setting and modal control */
-document.querySelector('.sidebar .open-button').addEventListener('click', () => {
+document.querySelector('.sidebar .open-icon').addEventListener('click', () => {
   document.querySelector('.sidebar').classList.toggle('open');
+});
+document.addEventListener('click', (e) => {
+  const sidebar = document.querySelector('.sidebar');
+  // don't trigger if sidebar is already open
+  if (!sidebar || sidebar.classList.contains('open')) return;
+  // little extra room for the touch target
+  // FIXME fix magic number, put in a config somewhere or tie to CSS variable for matching the display
+  if (e.clientX <= sidebar.getBoundingClientRect().right + 3) {
+    console.log('sidebar click')
+    sidebar.classList.add('open');
+  }
 });
 document.querySelectorAll('.sidebar input[type="color"]').forEach(el => {
   el.addEventListener('change', (e) => {
@@ -100,7 +112,7 @@ document.querySelector('.sidebar [data-import]').addEventListener('click', () =>
 });
 // closing the sidebar when clicking outside of it
 document.addEventListener('click', (e) => {
-  if (e.target.closest('.sidebar') === null && e.target.closest('.open-button') === null) {
+  if (e.target.closest('.sidebar') === null && e.target.closest('.open-icon') === null) {
     document.querySelector('.sidebar').classList.remove('open');
   }
 });
@@ -273,10 +285,10 @@ class TrackerList extends HTMLElement {
     this.querySelector('[data-title]').addEventListener('click', () => { this.setEditMode(true); });
     this.querySelector('input[type="text"]').addEventListener('keypress', (e) => { e.key === 'Enter' ? this.handleCloseInput(e) : null });
     this.querySelector('input[type="text"]').addEventListener('focusout', this.handleCloseInput.bind(this));
-    this.addEventListener('dragover', this.handleItemDragover.bind(this));
-    this.addEventListener('dragenter', (e) => { e.preventDefault(); console.log('list dragenter') });
-    this.addEventListener('dragleave', (e) => { e.preventDefault(); console.log('list dragleave') });
-    this.addEventListener('drop', this.handleItemDrop.bind(this));
+    //this.addEventListener('dragover', this.handleItemDragover.bind(this));
+    //this.addEventListener('dragenter', (e) => { e.preventDefault(); console.log('list dragenter') });
+    //this.addEventListener('dragleave', (e) => { e.preventDefault(); console.log('list dragleave') });
+    //this.addEventListener('drop', this.handleItemDrop.bind(this));
   }
 
   setEditMode(mode) {
@@ -387,24 +399,11 @@ class TrackerItem extends HTMLElement {
   }
 
   connectedCallback() {
-    this.template = document.getElementById('item-template').content;
-    this.appendChild(this.template.cloneNode(true));
-    this.draggable = true
-
-    // initial conditions
-    this.setText(this.getAttribute('text') || 'New Task');
-    this.setChecked(this.getAttribute('checked') === 'true' ? true : false);
-
-    // checkbox and text input events
-    this.querySelector('[data-delete]').addEventListener('click', () => { this.delete(); });
-    this.querySelector('span').addEventListener('click', () => { this.setEditMode(true); });
-    this.querySelector('input[type="checkbox"]').addEventListener('change', () => { document.querySelector('tracker-app').localSave(); });
-    this.querySelector('input[type="text"]').addEventListener('keypress', (e) => e.key === 'Enter' ? this.handleCloseInput(e) : null);
-    this.querySelector('input[type="text"]').addEventListener('focusout', this.handleCloseInput.bind(this));
-
-    // drag and drop
-    this.addEventListener('dragstart', this.handleDragStart.bind(this))
-    this.addEventListener('dragend', this.handleDragEnd.bind(this))
+    // check attribute if we need initial set, or if we're just moving around from a drag operation
+    // also, drag handlers manage the dragging attribute, specifically dragstart sets and dragend clears
+    if (!this.dragging) {
+      this.initialSetup()
+    } 
     //this.addEventListener('dragover', this.handleDragOver.bind(this))
     /*
       console.log('dragover')
@@ -428,6 +427,29 @@ class TrackerItem extends HTMLElement {
     */
   }
 
+  initialSetup() {
+    this.template = document.getElementById('item-template').content;
+    this.appendChild(this.template.cloneNode(true));
+    this.draggable = true
+
+    // initial conditions
+    this.setText(this.getAttribute('text') || 'New Task');
+    this.setChecked(this.getAttribute('checked') === 'true' ? true : false);
+
+    // checkbox and text input events
+    this.querySelector('[data-delete]').addEventListener('click', () => { this.delete(); });
+    this.querySelector('span').addEventListener('click', () => { this.setEditMode(true); });
+    this.querySelector('input[type="checkbox"]').addEventListener('change', () => { document.querySelector('tracker-app').localSave(); });
+    this.querySelector('input[type="text"]').addEventListener('keypress', (e) => e.key === 'Enter' ? this.handleCloseInput(e) : null);
+    this.querySelector('input[type="text"]').addEventListener('focusout', this.handleCloseInput.bind(this));
+
+    // drag and drop
+    this.addEventListener('dragstart', this.handleDragStart.bind(this))
+    this.addEventListener('dragend', this.handleDragEnd.bind(this))
+    this.addEventListener('dragenter', this.handleDragEnter.bind(this))
+
+  }
+
   // event handlers
   handleCloseInput (e) {
     this.setText(e.target.value);
@@ -435,35 +457,30 @@ class TrackerItem extends HTMLElement {
     document.querySelector('tracker-app').localSave();
   }
   handleDragStart(e) {
+    this.dragging = true;
     this.classList.add('dragging');
-    console.log('dragstart')
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', this.querySelector('span').innerHTML);
     this.closest('tracker-list').draggedItem = this;
   }
-
-  handleDragOver(e) {
-    console.log(e)
+  handleDragEnter (e) {
     e.preventDefault();
-    console.log('dragover')
-    if (this.classList.contains('dragging')) return;
 
+    if (this.dragging) return;
+
+    // if dragged item is above this item, insert it before this item, otherwise insert it after
     const rect = this.getBoundingClientRect();
     const midPoint = rect.top + (rect.height / 2);
-    if (e.clientY > midPoint) {
-      console.log('bottom')
-      this.classList.add('drag-over-bottom');
+    if (e.clientY < midPoint) {
+      this.parentElement.insertBefore(this, this.previousElementSibling);
     } else {
-      console.log('top')
-      this.classList.add('drag-over-top');
+      this.parentElement.insertBefore(this.previousElementSibling, this);
     }
   }
   handleDragEnd(e) {
-    console.log('dragend')
+    this.dragging = false;
     this.classList.remove('dragging');
     this.closest('tracker-list').draggedItem = null;
-    const indicator = document.querySelector('[data-drag-indicator]')
-    indicator.style.display = 'none';
   }
 
   setText(text) {
