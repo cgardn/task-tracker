@@ -34,18 +34,19 @@ Todo Refactor:
    */
 
 /* sidebar, just some setting and modal control */
-document.querySelector('.sidebar .open-icon').addEventListener('click', () => {
-  document.querySelector('.sidebar').classList.toggle('open');
-});
-document.addEventListener('click', (e) => {
-  const sidebar = document.querySelector('.sidebar');
-  // don't trigger if sidebar is already open
-  if (!sidebar || sidebar.classList.contains('open')) return;
-  // little extra room for the touch target
-  // FIXME fix magic number, put in a config somewhere or tie to CSS variable for matching the display
-  if (e.clientX <= sidebar.getBoundingClientRect().right + 3) {
-    console.log('sidebar click')
-    sidebar.classList.add('open');
+document.querySelector('.sidebar').addEventListener('click', (e) => {
+  const sidebar = e.target.closest('.sidebar');
+  if (!sidebar) return;
+  if (e.target.closest('svg') !== null && sidebar.classList.contains('open')) {
+    sidebar.classList.toggle('open');
+
+  // don't trigger edge click if sidebar is already open
+  } else if (!sidebar.classList.contains('open')) {
+    // little extra room for the touch target
+    // FIXME fix magic number, put in a config somewhere or tie to CSS variable for matching the display
+    if (e.clientX <= sidebar.getBoundingClientRect().right + 3) {
+      sidebar.classList.toggle('open');
+    }
   }
 });
 document.querySelectorAll('.sidebar input[type="color"]').forEach(el => {
