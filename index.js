@@ -405,6 +405,9 @@ class TrackerItem extends HTMLElement {
     if (!this.dragging) {
       this.initialSetup()
     } 
+    this.addEventListener('dragover', (e) => {
+      e.preventDefault();
+    })
     //this.addEventListener('dragover', this.handleDragOver.bind(this))
     /*
       console.log('dragover')
@@ -472,11 +475,14 @@ class TrackerItem extends HTMLElement {
     // if dragged item is above this item, insert it before this item, otherwise insert it after
     const rect = this.getBoundingClientRect();
     const midPoint = rect.top + (rect.height / 2);
+    const draggedItem = this.closest('tracker-list').draggedItem;
+
     if (e.clientY < midPoint) {
-      this.parentElement.insertBefore(this, this.previousElementSibling);
+      this.parentElement.insertBefore(draggedItem, this.nextElementSibling);
     } else {
-      this.parentElement.insertBefore(this.previousElementSibling, this);
+      this.parentElement.insertBefore(draggedItem, this);
     }
+    document.querySelector('tracker-app').localSave();
   }
   handleDragEnd(e) {
     this.dragging = false;
