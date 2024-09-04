@@ -286,10 +286,21 @@ class TrackerList extends HTMLElement {
     this.querySelector('[data-title]').addEventListener('click', () => { this.setEditMode(true); });
     this.querySelector('input[type="text"]').addEventListener('keypress', (e) => { e.key === 'Enter' ? this.handleCloseInput(e) : null });
     this.querySelector('input[type="text"]').addEventListener('focusout', this.handleCloseInput.bind(this));
-    //this.addEventListener('dragover', this.handleItemDragover.bind(this));
-    //this.addEventListener('dragenter', (e) => { e.preventDefault(); console.log('list dragenter') });
-    //this.addEventListener('dragleave', (e) => { e.preventDefault(); console.log('list dragleave') });
-    //this.addEventListener('drop', this.handleItemDrop.bind(this));
+    this.addEventListener('dragover', e => e.preventDefault());
+    this.addEventListener('dragenter', (e) => { 
+      e.preventDefault();
+      // skip if inside this list
+      if (this.draggedItem) return;
+      // if we don't have a dragged item, find the dragged item, clear it's parent draggedItem, and set this draggedItem to the dragged item
+      else {
+        const item = document.querySelector('tracker-item.dragging');
+        item.closest('tracker-list').draggedItem = null;
+        this.draggedItem = item;
+        if (this.querySelector('.list-items').children.length === 0) {
+          this.querySelector('.list-items').appendChild(item);
+        }
+      }
+    });
   }
 
   setEditMode(mode) {
@@ -353,15 +364,6 @@ class TrackerList extends HTMLElement {
     this.updateItemMidpoints();
   }
 
-  handleItemDrop(e) {
-    e.preventDefault();
-    console.log(e);
-    console.log("list drop")
-    const data = e.dataTransfer.getData('text/plain');
-    const item = document.createElement('tracker-item');
-    item.setAttribute('text', data);
-  }
-
   import(data) {
     for (let item of data) {
       this.addItem(item.text, item.checked);
@@ -405,30 +407,10 @@ class TrackerItem extends HTMLElement {
     if (!this.dragging) {
       this.initialSetup()
     } 
+    // need to cancel dragover for dragging to work properly
     this.addEventListener('dragover', (e) => {
       e.preventDefault();
     })
-    //this.addEventListener('dragover', this.handleDragOver.bind(this))
-    /*
-      console.log('dragover')
-      e.preventDefault();
-      if (this.classList.contains('dragging')) return;
-
-      const target = e.target.tagName == 'TRACKER-ITEM' ? e.target : e.target.closest('tracker-item')
-      // if we're not over a tracker-item or one of it's children, just return
-      if (!target) return;
-      console.log('item dragover', target);
-      return
-
-      const rect = this.getBoundingClientRect();
-      const midPoint = rect.top + (rect.height / 2);
-      if (e.clientY > midPoint) {
-        this.classList.add('drag-over-bottom');
-      } else {
-        this.classList.add('drag-over-top');
-      }
-    });
-    */
   }
 
   initialSetup() {
@@ -472,7 +454,7 @@ class TrackerItem extends HTMLElement {
 
     if (this.dragging) return;
 
-    // if dragged item is above this item, insert it before this item, otherwise insert it after
+    // if dragged item is above this item, insert it before this item, otherwise insert it before the dragged item's next sibling
     const rect = this.getBoundingClientRect();
     const midPoint = rect.top + (rect.height / 2);
     const draggedItem = this.closest('tracker-list').draggedItem;
