@@ -388,10 +388,6 @@ class TrackerItem extends HTMLElement {
     if (!this.dragging) {
       this.initialSetup()
     } 
-    // need to cancel dragover for dragging to work properly
-    this.addEventListener('dragover', (e) => {
-      e.preventDefault();
-    })
   }
 
   initialSetup() {
@@ -407,6 +403,11 @@ class TrackerItem extends HTMLElement {
     this.querySelector('[data-delete]').addEventListener('click', () => { this.delete(); });
     this.querySelector('span').addEventListener('click', () => { this.setEditMode(true); });
     this.querySelector('input[type="checkbox"]').addEventListener('change', (e) => { 
+      if (e.target.checked) {
+        this.dragging = true;
+        this.parentElement.appendChild(this);
+        this.dragging = false;
+      }
       document.querySelector('tracker-app').localSave();
     });
     this.querySelector('input[type="text"]').addEventListener('keypress', (e) => e.key === 'Enter' ? this.handleCloseInput(e) : null);
@@ -416,7 +417,8 @@ class TrackerItem extends HTMLElement {
     this.addEventListener('dragstart', this.handleDragStart.bind(this))
     this.addEventListener('dragend', this.handleDragEnd.bind(this))
     this.addEventListener('dragenter', this.handleDragEnter.bind(this))
-
+    // need to cancel dragover for dragging to work properly
+    this.addEventListener('dragover', e => e.preventDefault());
   }
 
   // event handlers
