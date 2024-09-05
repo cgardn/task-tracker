@@ -199,6 +199,13 @@ class TrackerApp extends HTMLElement {
       this.new_list_input_handler(e.target.previousElementSibling)
       this.localSave();
     });
+    this.onwheel = (e) => {
+      if (e.deltaY > 0) {
+        this.querySelector('.app-tasks').scrollLeft += 300;
+      } else {
+        this.querySelector('.app-tasks').scrollLeft -= 300;
+      }
+    };
   }
 
   addList(title, items = []) {
@@ -286,21 +293,8 @@ class TrackerList extends HTMLElement {
     this.querySelector('[data-title]').addEventListener('click', () => { this.setEditMode(true); });
     this.querySelector('input[type="text"]').addEventListener('keypress', (e) => { e.key === 'Enter' ? this.handleCloseInput(e) : null });
     this.querySelector('input[type="text"]').addEventListener('focusout', this.handleCloseInput.bind(this));
+    this.addEventListener('dragenter', this.handleDragEnter.bind(this))
     this.addEventListener('dragover', e => e.preventDefault());
-    this.addEventListener('dragenter', (e) => { 
-      e.preventDefault();
-      // skip if inside this list
-      if (this.draggedItem) return;
-      // if we don't have a dragged item, find the dragged item, clear it's parent draggedItem, and set this draggedItem to the dragged item
-      else {
-        const item = document.querySelector('tracker-item.dragging');
-        item.closest('tracker-list').draggedItem = null;
-        this.draggedItem = item;
-        if (this.querySelector('.list-items').children.length === 0) {
-          this.querySelector('.list-items').appendChild(item);
-        }
-      }
-    });
   }
 
   setEditMode(mode) {
@@ -335,33 +329,20 @@ class TrackerList extends HTMLElement {
     input.value = '';
   }
 
-  handleItemDragover(e) {
-    // basically the list watches for which other list item the dragged item just passed, and moves the ghost item to that position
-    // but it's not really a ghost item, it's the actual item being dragged with some css to make it look like a ghost item
-    // that way we can just cancel/end the drag at any time and nothing needs to be transferred, the dragged item has already been moved
-    // TODO: account for moving between lists
-    // new: if the dragged item is over the top half of an item, move it above that item, if it's over the bottom half, move it below that item
-    // - need to get specifically what tracker-item the dragged item is over, can check if target is tracker-item and if not find closest tracker-item
-    //  -- if both fail then we're not inside a tracker-item and can just return
+  handleDragEnter (e) {
     e.preventDefault();
-    const target = e.target.tagName == 'TRACKER-ITEM' ? e.target : e.target.closest('tracker-item')
-    // if we're not over a tracker-item or one of it's children, just return
-    if (!target) return;
-    console.log(target);
-    return
-
-    this.updateItemMidpoints();
-    const dragY = e.clientY;
-    // get next midpoint down that is below clientY
-    let nextMidpoint = Object.keys(this.itemMidpoints).find(midpoint => midpoint > dragY);
-    let nextItem = nextMidpoint ? this.itemMidpoints[nextMidpoint] : null;
-    // move dragged item above nextItem, unless it's the last item, then move it below
-    if (nextItem) {
-      nextItem.parentElement.insertBefore(this.draggedItem, nextItem);
-    } else {
-      this.appendChild(this.draggedItem);
+    // skip if inside this list
+    if (this.draggedItem) return;
+    // if we don't have a dragged item, find the dragged item, clear it's parent draggedItem, and set this draggedItem to the dragged item
+    else {
+      const item = document.querySelector('tracker-item.dragging');
+      item.closest('tracker-list').draggedItem = null;
+      this.draggedItem = item;
+      if (this.querySelector('.list-items').children.length === 0) {
+        this.querySelector('.list-items').appendChild(item);
+      }
     }
-    this.updateItemMidpoints();
+    document.querySelector('tracker-app').localSave();
   }
 
   import(data) {
@@ -425,7 +406,9 @@ class TrackerItem extends HTMLElement {
     // checkbox and text input events
     this.querySelector('[data-delete]').addEventListener('click', () => { this.delete(); });
     this.querySelector('span').addEventListener('click', () => { this.setEditMode(true); });
-    this.querySelector('input[type="checkbox"]').addEventListener('change', () => { document.querySelector('tracker-app').localSave(); });
+    this.querySelector('input[type="checkbox"]').addEventListener('change', (e) => { 
+      document.querySelector('tracker-app').localSave();
+    });
     this.querySelector('input[type="text"]').addEventListener('keypress', (e) => e.key === 'Enter' ? this.handleCloseInput(e) : null);
     this.querySelector('input[type="text"]').addEventListener('focusout', this.handleCloseInput.bind(this));
 

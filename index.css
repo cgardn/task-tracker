@@ -25,6 +25,7 @@ body {
   color: var(--text-color);
   opacity: 1;
   transition: opacity 0.3s ease-in;
+  position: relative;
 }
 .sidebar.open ~ tracker-app .app {
   opacity: 0.5;
@@ -69,6 +70,15 @@ body {
   border-bottom: 1px solid #ccc;
   margin: 0 0 0 20px;
   padding: 10px 20px;
+  position: sticky;
+  top: 0;
+}
+@media screen and (max-width: 767px) {
+  .app-tasks {
+    flex-direction: column;
+    gap: 20px;
+    height: fit-content;
+  }
 }
 
 /* lists */
